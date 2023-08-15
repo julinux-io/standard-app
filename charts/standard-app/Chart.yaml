@@ -1,0 +1,4 @@
+apiVersion: v1
+description: A standard application setup with Nginx fronting the HTTP deployment
+name: standard-app
+version: 2.10.0

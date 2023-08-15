@@ -1,0 +1,374 @@
+affinity: {}
+tolerations: []
+
+app:
+  envVars: {}
+  envVarsRaw: []
+
+  extraVolumeMounts: []
+
+  image:
+    pullPolicy: IfNotPresent
+    registry: 916001899522.dkr.ecr.us-east-1.amazonaws.com/
+    repository: "nhds/agent-territory-management"
+    tag: "latest"
+
+  logRoot: ""
+  workingDir: ""
+
+appName: ""
+
+autonameStyle: short
+
+configMaps: {}
+
+cronDefault:
+  affinity: {}
+  tolerations: []
+
+  app:
+    args: []
+    command: []
+
+    envVars: {}
+    envVarsRaw: []
+    extraVolumeMounts: []
+
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 64Mi
+
+  # TODO: Switch default to "Forbid" when https://github.com/kubernetes/kubernetes/issues/25908
+  # is fixed (logging sidecar containers block pod termination, causing jobs to run forever)
+  concurrencyPolicy: Replace
+
+  extraContainers: []
+  extraInitContainers: []
+  extraPodAnnotations: {}
+  extraVolumes: []
+
+  iamRole: ""
+  logs:
+    app: []
+
+  priorityClassName: ""
+  serviceAccountName: ""
+  workingDir: ""
+
+cronJobs: {}
+
+extraPodAnnotations: {}
+extraVolumes: []
+
+http:
+  affinity: {}
+  tolerations: []
+
+  app:
+    args: []
+    command: []
+
+    envVars: {}
+    envVarsRaw: []
+
+    # Extra volumes mounted in app container only in HTTP deployment
+    extraVolumeMounts: []
+
+    newrelic:
+      enabled: false
+      appName: Neighborhoods k8s HTTP
+      agentLicenseSecret: newrelic-agent-license
+
+    ports: []
+
+    readinessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 1
+      periodSeconds: 2
+      successThreshold: 2
+      tcpSocket:
+        port: 9000
+
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 64Mi
+
+  deploymentStrategy: {}
+  enabled: true
+
+  extraContainers: []
+  extraInitContainers: []
+  extraPodAnnotations: {}
+  extraVolumes: []
+
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 2
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          targetAverageUtilization: 90
+          # targetAverageValue: 500m
+
+  iamRole: ""
+
+  logs:
+    nginx:
+      - access.log
+      - error.log
+
+    app: []
+
+  minReadySeconds: null
+
+  pdb:
+    enabled: false
+    maxUnavailable: null
+    minAvailable: null
+
+  priorityClassName: ""
+
+  replicas: 1
+  serviceAccountName: ""
+
+  staticFiles:
+    args: []
+    command: []
+    enabled: false
+
+    extraVolumeMounts: []
+
+    initMountPath: /static
+    nginxMountPath: /static
+
+    resources:
+      limits:
+        cpu: 50m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+    volumeName: static-files
+
+iamRole: ""
+
+ingress:
+  class: ""
+  defaultBackend:
+    enabled: false
+
+  enabled: false
+  extraAnnotations: {}
+  extraHosts: []
+  host: ""
+
+  auth: false
+  oidc:
+    clientId: ""
+    clientSecret: ""
+
+nginx:
+  args: []
+  basicAuth: {}
+  command: []
+
+  confTemplatesEnabled:
+    basicauth.conf: false
+    php.conf: false
+    realip.conf: true
+    large_headers.conf: true
+
+  confTemplates:
+    basicauth.conf: |
+      auth_basic "Authentication Required";
+      auth_basic_user_file "/etc/nginx/auth/htpasswd.txt";
+
+      # Whitelist our IPs
+      satisfy any;
+      allow 38.32.96.0/29; # Primary office (Cogent) range
+      allow 96.90.119.94/30; # Backup office (Comcast) range
+      allow 52.7.73.211; # VPC NAT Gateway
+      deny all;
+
+    php.conf: |
+      upstream php-fpm-upstream {
+          server 127.0.0.1:9000;
+      }
+
+      server {
+          listen 80 default_server;
+
+          root ${PHP_FPM_ROOT};
+
+          location / {
+              # If file does not exist in static mount, rewrite to serve index.php
+              alias /static/;
+              if ( !-e $request_filename ) {
+                  rewrite ^(.*)$ /index.php?_url=$1 last;
+              }
+
+              try_files $uri @handler;
+          }
+
+          location /healthz/ingress {
+              return 200 "ok";
+              access_log off;
+          }
+
+          location @handler {
+              rewrite ^(.*)$ /index.php?_url=$1;
+          }
+
+          location ~ .php$ { ## Execute PHP scripts
+              expires        off; ## Do not cache dynamic content
+              fastcgi_param  HTTPS $fastcgi_https;
+              fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+              fastcgi_pass   php-fpm-upstream;
+              include        fastcgi_params; ## See /etc/nginx/fastcgi_params
+              add_header X-Kube-Env yes always;
+          }
+      }
+
+    realip.conf: |
+      set_real_ip_from 172.16.0.0/13;
+      set_real_ip_from 10.0.0.0/8;
+      set_real_ip_from 127.0.0.1;
+
+      set_real_ip_from 173.245.48.0/20;
+      set_real_ip_from 103.21.244.0/22;
+      set_real_ip_from 103.22.200.0/22;
+      set_real_ip_from 103.31.4.0/22;
+      set_real_ip_from 141.101.64.0/18;
+      set_real_ip_from 108.162.192.0/18;
+      set_real_ip_from 190.93.240.0/20;
+      set_real_ip_from 188.114.96.0/20;
+      set_real_ip_from 197.234.240.0/22;
+      set_real_ip_from 198.41.128.0/17;
+      set_real_ip_from 162.158.0.0/15;
+      set_real_ip_from 104.16.0.0/12;
+      set_real_ip_from 172.64.0.0/13;
+      set_real_ip_from 131.0.72.0/22;
+
+      set_real_ip_from 2400:cb00::/32;
+      set_real_ip_from 2606:4700::/32;
+      set_real_ip_from 2803:f800::/32;
+      set_real_ip_from 2405:b500::/32;
+      set_real_ip_from 2405:8100::/32;
+      set_real_ip_from 2a06:98c0::/29;
+      set_real_ip_from 2c0f:f248::/32;
+
+      real_ip_header X-Forwarded-For;
+
+    large_headers.conf: |
+      client_header_buffer_size 256k;
+      large_client_header_buffers 8 512k;
+
+  enabled: true
+  envVars:
+    NGINX_TEMPLATE_VARS: ""
+
+  envVarsRaw: []
+
+  extraVolumeMounts: []
+
+  image:
+    pullPolicy: IfNotPresent
+    registry: ""
+    repository: neighborhoods/nginx-extra
+    tag: 1.1.1
+
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    successThreshold: 2
+    tcpSocket:
+      port: 80
+
+  resources:
+    limits:
+      cpu: 50m
+      memory: 32Mi
+    requests:
+      cpu: 50m
+      memory: 32Mi
+
+service:
+  enabled: true
+  extraAnnotations: {}
+  port: 80
+  metrics:
+    enabled: false
+    port: 9080
+    name: metrics
+    targetPort: 80
+  name: ""
+  targetPort: 80
+  type: ClusterIP
+
+serviceAccountName: ""
+
+workerDefault:
+  affinity: {}
+  tolerations: []
+
+  app:
+    args: []
+    command: []
+
+    envVars: {}
+    envVarsRaw: []
+    extraVolumeMounts: []
+
+    newrelic:
+      enabled: false
+      appName: Neighborhoods k8s Worker
+      agentLicenseSecret: newrelic-agent-license
+
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 64Mi
+
+  deploymentStrategy: {}
+  extraContainers: []
+  extraInitContainers: []
+  extraPodAnnotations: {}
+  extraVolumes: []
+
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 2
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          targetAverageUtilization: 90
+          # targetAverageValue: 500m
+
+  iamRole: ""
+  logs:
+    app: []
+
+  minReadySeconds: null
+  priorityClassName: ""
+  replicas: 1
+  serviceAccountName: ""
+  workingDir: ""
+
+workers: {}

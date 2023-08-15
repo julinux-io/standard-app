@@ -1,0 +1,79 @@
+{{- $root := . -}}
+{{- $def := .Values.workerDefault -}}
+{{- range $id, $val := .Values.workers -}}
+{{- $logs := .logs | default $def.logs -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "util.v1.autoname" $root }}-worker-{{ $id }}
+  namespace: {{ $root.Release.Namespace }}
+  labels:
+{{ include "standard-app.v1.resource-labels" $root | indent 4 }}
+spec:
+  replicas: {{ .replicas | default $def.replicas }}
+{{- with (.deploymentStrategy | default $def.deploymentStrategy) }}
+  strategy:
+{{ toYaml . | indent 4 }}
+{{- end}}
+  minReadySeconds: {{ hasKey . "minReadySeconds" | ternary .minReadySeconds $def.minReadySeconds | default 0 }}
+  selector:
+    matchLabels:
+{{ include "standard-app.v1.selector-labels" $root | indent 6 }}
+      tier: worker-{{ $id }}
+  template:
+    metadata:
+      annotations:
+        iam.amazonaws.com/role: {{ .iamRole | default $def.iamRole | default $root.Values.iamRole | default "" | quote }}
+{{ with $root.Values.extraPodAnnotations }}{{ toYaml . | indent 8 }}{{ end }}
+{{ with .extraPodAnnotations }}{{ toYaml . | indent 8 }}{{ end }}
+{{ with $def.extraPodAnnotations }}{{ toYaml . | indent 8 }}{{ end }}
+      labels:
+{{ include "standard-app.v1.selector-labels" $root | indent 8 }}
+{{ include "standard-app.v1.newrelic.labels" ( .app.newrelic | default $def.app.newrelic ) | indent 8 }}
+        tier: worker-{{ $id }}
+    spec:
+{{ include "util.v1.extra.affinity" (.affinity | default $def.affinity | default $root.Values.affinity) | indent 6 }}
+{{ include "util.v1.extra.tolerations" (.tolerations | default $def.tolerations | default $root.Values.tolerations) | indent 6 }}
+      serviceAccountName: {{ .serviceAccountName | default $def.serviceAccountName | default $root.Values.serviceAccountName |  default "" | quote }}
+      priorityClassName: {{ .priorityClassName | default $def.priorityClassName | default "" | quote }}
+      containers:
+      - name: app
+        image: {{ include "util.v1.extra.image_ref" $root.Values.app.image }}
+        imagePullPolicy: {{ $root.Values.app.image.pullPolicy | default "null" }}
+{{- with (.app.workingDir | default $def.app.workingDir | default $root.Values.app.workingDir) }}
+        workingDir: {{ . | quote }}
+{{- end }}
+{{ if or $root.Values.app.envVars $root.Values.app.envVarsRaw $def.app.envVars $def.app.envVarsRaw .app.envVars .app.envVarsRaw }}
+        env:
+{{ include "util.v1.env_list" $root.Values.app.envVars | indent 8 }}
+{{ with $root.Values.app.envVarsRaw }}{{ toYaml . | indent 8 }}{{ end }}
+{{ include "util.v1.env_list" $def.app.envVars | indent 8 }}
+{{ with $def.app.envVarsRaw }}{{ toYaml . | indent 8 }}{{ end }}
+{{ include "util.v1.env_list" .app.envVars | indent 8 }}
+{{ with .app.envVarsRaw }}{{ toYaml . | indent 8 }}{{ end }}
+{{ include "standard-app.v1.newrelic.env" (.app.newrelic | default $def.app.newrelic) | indent 8 }}
+{{ end}}
+{{ include "util.v1.extra.command_and_args" .app | indent 8 }}
+{{ include "util.v1.extra.resources" (.app.resources | default $def.app.resources) | indent 8 }}
+        volumeMounts:
+        - mountPath: {{ $root.Values.app.logRoot | required "Must specify .Values.app.logRoot" | quote }}
+          name: {{ include "util.v1.logwatch.name" "app"  | quote }}
+{{ with $root.Values.app.extraVolumeMounts }}{{ toYaml . | indent 8 }}{{ end }}
+{{ with $def.app.extraVolumeMounts }}{{ toYaml . | indent 8 }}{{ end }}
+{{ with .app.extraVolumeMounts }}{{ toYaml . | indent 8 }}{{ end }}
+
+{{ include "util.v1.logwatch.container_list" $logs | indent 6 }}
+{{ with $def.extraContainers }}{{ toYaml . | indent 6 }}{{ end }}
+{{ with .extraContainers }}{{ toYaml . | indent 6 }}{{ end }}
+
+      initContainers:
+{{ with $def.extraInitContainers }}{{ toYaml . | indent 6 }}{{ end }}
+{{ with .extraInitContainers }}{{ toYaml . | indent 6 }}{{ end }}
+{{ include "util.v1.logwatch.container_init_list" $logs | indent 6 }}
+      volumes:
+{{ include "util.v1.logwatch.volume_list" $logs | indent 6 }}
+{{ with $root.Values.extraVolumes }}{{ toYaml . | indent 6 }}{{ end }}
+{{ with $def.extraVolumes }}{{ toYaml . | indent 6 }}{{ end }}
+{{ with .extraVolumes }}{{ toYaml . | indent 6 }}{{ end }}
+{{ end }}

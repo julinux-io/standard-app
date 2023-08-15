@@ -1,0 +1,19 @@
+{{- if and .Values.http.enabled .Values.http.hpa.enabled .Values.http.hpa.metrics }}
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "util.v1.autoname" . }}-http
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "standard-app.v1.resource-labels" . | indent 4 }}
+spec:
+  minReplicas: {{ .Values.http.hpa.minReplicas }}
+  maxReplicas: {{ .Values.http.hpa.maxReplicas }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "util.v1.autoname" . }}-http
+  metrics:
+{{ toYaml .Values.http.hpa.metrics | indent 4 }}
+{{- end }}
