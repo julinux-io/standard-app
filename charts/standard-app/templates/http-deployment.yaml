@@ -37,10 +37,10 @@ spec:
       - name: app
         image: {{ include "util.v1.extra.image_ref" .Values.app.image }}
         imagePullPolicy: {{ .Values.app.image.pullPolicy | default "null" }}
-      {{- if .Values.imagePullSecrets.enabled }}
+{{- if .Values.secret.imagePullSecrets.enabled | default false }}
       imagePullSecrets:
-      - name: {{ .Values.secretName }}
-      {{- end }}
+      - name: {{ .Values.secretName | default .Chart.Name }}
+{{- end }}
 {{- with .Values.app.workingDir }}
             workingDir: {{ . | quote }}
 {{- end }}
