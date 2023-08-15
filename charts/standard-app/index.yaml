@@ -1,12 +1,12 @@
 apiVersion: v1
 entries:
   standard-app:
-  - apiVersion: v1
-    created: "2023-08-15T17:54:43.320075-03:00"
-    description: A standard application setup with Nginx fronting the HTTP deployment
-    digest: b8a7fe41a331e3b55efd13377f970aa8da1f400cdd6819e2ba53bb5305cff3a2
-    name: standard-app
-    urls:
-    - https://julinux-io.github.io/standard-app/standard-app-2.10.0.tgz
-    version: 2.10.0
+    - apiVersion: v1
+      created: "2023-08-15T17:54:43.320075-03:00"
+      description: A standard application setup with Nginx fronting the HTTP deployment
+      digest: b8a7fe41a331e3b55efd13377f970aa8da1f400cdd6819e2ba53bb5305cff3a2
+      name: standard-app
+      urls:
+        - https://julinux-io.github.io/standard-app/charts/standard-app/standard-app-2.10.0.tgz
+      version: 2.10.0
 generated: "2023-08-15T17:54:43.30675-03:00"
