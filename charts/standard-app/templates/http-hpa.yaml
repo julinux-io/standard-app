@@ -1,6 +1,6 @@
 {{- if and .Values.http.enabled .Values.http.hpa.enabled .Values.http.hpa.metrics }}
 ---
-apiVersion: autoscaling/v2beta1
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "util.v1.autoname" . }}-http
