@@ -45,12 +45,3 @@ jobs:
         id: update_tag
         if: contains(steps.check_changes.outputs.result, '.github/workflows/standard-app.yml') == false
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.current_version.outputs.version }} # Use a versão atual do Chart.yaml
-          release_name: Release v${{ steps.current_version.outputs.version }}
-          body: |
-            Update tag.
-          draft: false
-          prerelease: false
