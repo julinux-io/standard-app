@@ -29,7 +29,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add packaged/ && git commit -m "Update Helm repository"
-          git push origin main  # Substitua pela branch relevante
+          git push origin standard-app
 
       - name: Update Tag
         id: update_tag
