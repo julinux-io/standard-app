@@ -6,7 +6,7 @@
 {{- $metrics := (hasKey $hpa "metrics") | ternary $hpa.metrics $def.hpa.metrics }}
 {{- if and $enabled $metrics }}
 ---
-apiVersion: autoscaling/v2beta1
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "util.v1.autoname" $root }}-worker-{{ $id }}
