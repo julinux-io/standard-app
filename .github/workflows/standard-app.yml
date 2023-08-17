@@ -16,13 +16,26 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v1
 
-      - name: Get Chart Version
-        id: chart_version
-        run: export chart_version="$(grep version charts/standard-app/Chart.yaml)"
+      - name: Get Current Chart Version
+        id: current_version
+        run: |
+          version_line=$(grep version charts/standard-app/Chart.yaml)
+          echo "::set-output name=version::$(echo $version_line | awk '{print $2}')"
+
+      - name: Bump Chart Version
+        id: bump_version
+        run: |
+          current_version=${{ steps.current_version.outputs.version }}
+          new_version=$(echo $current_version | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+          echo "::set-output name=new_version::$new_version"
+
+      - name: Update Chart Version in Chart.yaml
+        run: sed -i "s/version: ${{ steps.current_version.outputs.version }}/version: ${{ steps.bump_version.outputs.new_version }}/" charts/standard-app/Chart.yaml
 
       - name: Package Helm Chart
         run: |
-          helm package charts/standard-app --version ${chart_version}
+          new_version=${{ steps.bump_version.outputs.new_version }}
+          helm package charts/standard-app --version $new_version -d packaged
 
       - name: Update Helm Repository Index
         run: helm repo index packaged --url https://julinux-io.github.io/standard-app/charts/standard-app
@@ -34,7 +47,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add packaged/ index.yaml && git commit -m "Update Helm repository"
+          git add packaged/ charts/standard-app/Chart.yaml index.yaml && git commit -m "Update Helm repository"
           git push origin standard-app
 
       - name: Update Tag
@@ -43,8 +56,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ github.run_number }}
-          release_name: Release v${{ github.run_number }}
+          tag_name: v${{ steps.bump_version.outputs.new_version }}
+          release_name: Release v${{ steps.bump_version.outputs.new_version }}
           body: |
             Update tag.
           draft: false
