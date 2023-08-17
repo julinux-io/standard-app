@@ -2,7 +2,8 @@ name: Helm Chart Release
 
 on:
   push:
-    branches: ["standard-app"]
+    branches:
+      - standard-app
 
 jobs:
   release:
@@ -23,7 +24,6 @@ jobs:
         run: |
           chart_version=${{ steps.chart_version.outputs.version }}
           helm package charts/standard-app --version ${chart_version} -d packaged
-          mv packaged/*.tgz packaged/standard-app-${chart_version}.tgz
 
       - name: Update Helm Repository Index
         run: helm repo index packaged --url https://julinux-io.github.io/standard-app/charts/standard-app
