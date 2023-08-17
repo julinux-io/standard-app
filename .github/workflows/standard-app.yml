@@ -47,10 +47,5 @@ jobs:
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.bump_version.outputs.new_version }} # Exemplo: v2.0.0
-          release_name: Release v${{ steps.bump_version.outputs.new_version }}
-          body: |
-            Update tag.
           draft: false
           prerelease: false
