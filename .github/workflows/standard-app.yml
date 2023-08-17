@@ -20,15 +20,6 @@ jobs:
         id: current_version
         run: echo "$(awk '/version:/ {print $2}' charts/standard-app/Chart.yaml)"
 
-      - name: Update Version in Chart.yaml
-        run: |
-          new_version=${{ steps.increment_version.outputs.new_version }}
-          sed -i "s/version: ${{ steps.current_version.outputs.result }}/version: $new_version/" charts/standard-app/Chart.yaml
-
-      - name: Get Updated Chart Version
-        id: updated_version
-        run: echo "$(awk '/version:/ {print $2}' charts/standard-app/Chart.yaml)"
-
       - name: Chart Package
         run: helm package charts/standard-app && mv *.tgz charts/standard-app
 
