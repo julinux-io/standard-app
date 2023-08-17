@@ -1,9 +1,0 @@
-name: helm chart
-
-on:
-  push:
-    branches: ["standard-app"]
-
-jobs:
-  CI:
-    runs-on: ubuntu-latest
