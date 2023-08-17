@@ -18,7 +18,7 @@ jobs:
 
       - name: Get Chart Version
         id: chart_version
-        run: echo "::set-output name=version::$(grep version charts/standard-app/Chart.yaml
+        run: echo "::set-output name=version::$(grep version charts/standard-app/Chart.yaml)"
 
       - name: Package Helm Chart
         run: |
