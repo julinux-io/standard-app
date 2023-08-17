@@ -19,7 +19,7 @@ jobs:
         run: helm package charts/standard-app
 
       - name: Update Helm Repository Index
-        run: helm repo index --url https://julinux-io.github.io/standard-app/charts/standard-app charts/standard-app && mv charts/standard-app/index.yaml .
+        run: helm repo index --url https://julinux-io.github.io/standard-app/charts/standard-app charts/standard-app
 
       - name: mv index for /
         run: mv charts/standard-app/index.yaml .
