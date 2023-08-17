@@ -1,43 +1,28 @@
-name: Helm Chart Release
+name: Release Charts
 
 on:
   push:
     branches:
-      - standard-app
+      - main
 
 jobs:
   release:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      - name: Set up Helm
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Install Helm
         uses: azure/setup-helm@v1
 
-      - name: Get Current Chart Version
-        id: current_version
-        run: echo "$(awk '/version:/ {print $2}' charts/standard-app/Chart.yaml)"
-
-      - name: Chart Package
-        run: helm package charts/standard-app && mv *.tgz charts/standard-app
-
-      - name: Create/Update index's chart
-        run: |
-          helm repo index --url https://julinux-io.github.io/standard-app/charts/standard-app charts/standard-app && mv charts/standard-app/index.yaml .
-
-      - name: Commit and Push Changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add packaged/ charts/standard-app/Chart.yaml index.yaml && git commit -m "Update Helm repository"
-          git push origin standard-app
-
-      - name: Update Tag
-        if: contains(steps.check_changes.outputs.result, '.github/workflows/standard-app.yml') == false
-        uses: actions/create-release@v1
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.2.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          draft: false
-          prerelease: false
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
