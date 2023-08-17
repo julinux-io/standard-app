@@ -45,3 +45,7 @@ jobs:
         id: update_tag
         if: contains(steps.check_changes.outputs.result, '.github/workflows/standard-app.yml') == false
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: false
