@@ -25,7 +25,9 @@ jobs:
         run: |
           current_version=${{ steps.current_version.outputs.result }}
           IFS='.' read -r -a version_parts <<< "$current_version"
-          ((version_parts[${#version_parts[@]} - 1]++))
+          last_part=${version_parts[${#version_parts[@]} - 1]}
+          ((last_part++))
+          version_parts[${#version_parts[@]} - 1]=$last_part
           new_version="${version_parts[0]}"
           for ((i = 1; i < ${#version_parts[@]}; i++)); do
             new_version="${new_version}.${version_parts[i]}"
