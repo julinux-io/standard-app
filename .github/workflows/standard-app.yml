@@ -39,8 +39,5 @@ jobs:
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: v${{ steps.updated_version.outputs.result }}
-          release_name: Release v${{ steps.updated_version.outputs.result }}
-          body: Update tag.
           draft: false
           prerelease: false
