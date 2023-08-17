@@ -18,12 +18,11 @@ jobs:
 
       - name: Get Chart Version
         id: chart_version
-        run: echo "::set-output name=version::$(grep version charts/standard-app/Chart.yaml | awk '{print $2}')"
+        run: echo "::set-output name=version::$(grep version charts/standard-app/Chart.yaml
 
       - name: Package Helm Chart
         run: |
-          chart_version=${{ steps.chart_version.outputs.version }}
-          helm package charts/standard-app --version ${chart_version} -d packaged
+          helm package charts/standard-app --version ${chart_version}
 
       - name: Update Helm Repository Index
         run: helm repo index packaged --url https://julinux-io.github.io/standard-app/charts/standard-app
