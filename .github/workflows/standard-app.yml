@@ -38,7 +38,7 @@ jobs:
       - name: Chart Package
         run: |
           helm package charts/standard-app 
-          mv standard-app-$new_version.tgz charts/standard-app
+          mv "./standard-app-$new_version.tgz" charts/standard-app
 
       - name: Create/Update index's chart
         run: |
