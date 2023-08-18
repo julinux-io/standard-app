@@ -33,11 +33,16 @@ jobs:
 
           sed "s/version:.*/version: $new_version/" charts/standard-app/Chart.yaml > tmpfile && mv tmpfile charts/standard-app/Chart.yaml
           cat charts/standard-app/Chart.yaml
+
       - name: Chart Package
-        run: helm package charts/standard-app && mv *.tgz charts/standard-app
+        run: |
+          helm package charts/standard-app 
+          mv *.tgz charts/standard-app
 
       - name: Create/Update index's chart
-        run: helm repo index --url https://julinux-io.github.io/standard-app/charts/standard-app charts/standard-app && mv charts/standard-app/index.yaml .
+        run: |
+          helm repo index --url https://julinux-io.github.io/standard-app/charts/standard-app charts/standard-app 
+          mv charts/standard-app/index.yaml .
 
       - name: Commit and Push Changes
         run: |
@@ -46,19 +51,19 @@ jobs:
           git add packaged/ charts/standard-app/Chart.yaml index.yaml && git commit -m "Update Helm repository"
           git push origin standard-app
 
-  tag_update:
-    runs-on: ubuntu-latest
-    needs: release
-    steps:
-      - name: Update Tag
-        id: update_tag
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.bump_version.outputs.new_version }}
-          release_name: Release v${{ steps.bump_version.outputs.new_version }}
-          body: |
-            Update tag.
-          draft: false
-          prerelease: false
+  # tag_update:
+  #   runs-on: ubuntu-latest
+  #   needs: release
+  #   steps:
+  #     - name: Update Tag
+  #       id: update_tag
+  #       uses: actions/create-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         tag_name: v${{ steps.bump_version.outputs.new_version }}
+  #         release_name: Release v${{ steps.bump_version.outputs.new_version }}
+  #         body: |
+  #           Update tag.
+  #         draft: false
+  #         prerelease: false
