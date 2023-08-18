@@ -2,8 +2,8 @@ name: Helm Chart Release
 
 on:
   push:
-    branches:
-      - standard-app
+    paths-ignore: [".github/standard-app/standard-app.yml"]
+    branches: ["standard-app"]
 
 jobs:
   release:
