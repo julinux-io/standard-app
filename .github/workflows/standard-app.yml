@@ -19,7 +19,7 @@ jobs:
       - name: Update Chart Version
         id: update_version
         run: |
-          current_version=$(awk '/version:/ {print $2}' ${PWD}charts/standard-app/Chart.yaml)
+          current_version=$(awk '/version:/ {print $2}' ${PWD}/charts/standard-app/Chart.yaml)
           increment_version="0.1.0"
           IFS='.' read -ra current_parts <<< "$current_version"
           IFS='.' read -ra increment_parts <<< "$increment_version"
@@ -31,9 +31,9 @@ jobs:
           new_version="$first.$second.$third"
           echo $new_version
 
-          sed "s/version:.*/version: $new_version/" charts/standard-app/Chart.yaml > tmpfile
-          mv tmpfile ${PWD}charts/standard-app/Chart.yaml
-          cat ${PWD}charts/standard-app/Chart.yaml
+          sed "s/version:.*/version: $new_version/" ${PWD}/charts/standard-app/Chart.yaml > tmpfile
+          mv tmpfile ${PWD}/charts/standard-app/Chart.yaml
+          cat ${PWD}/charts/standard-app/Chart.yaml
 
       - name: Chart Package
         run: |
