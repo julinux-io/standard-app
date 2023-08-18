@@ -33,9 +33,10 @@ jobs:
           third=$((current_parts[5] + increment_parts[5]))
 
           export new_version="$first.$second.$third"
+          echo $new_version
 
           sed "s/version:.*/version: $new_version/" charts/standard-app/Chart.yaml > tmpfile && mv tmpfile charts/standard-app/Chart.yaml
-
+          cat charts/standard-app/Chart.yaml
       - name: Chart Package
         run: helm package charts/standard-app && mv *.tgz charts/standard-app
 
