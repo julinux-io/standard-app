@@ -19,7 +19,7 @@ jobs:
       - name: Update Chart Version
         id: update_version
         run: |
-          current_version=$(awk '/version:/ {print $2}' charts/standard-app/Chart.yaml)
+          current_version=$(awk '/version:/ {print $2}' ${PWD}charts/standard-app/Chart.yaml)
           increment_version="0.1.0"
           IFS='.' read -ra current_parts <<< "$current_version"
           IFS='.' read -ra increment_parts <<< "$increment_version"
@@ -32,18 +32,18 @@ jobs:
           echo $new_version
 
           sed "s/version:.*/version: $new_version/" charts/standard-app/Chart.yaml > tmpfile
-          mv tmpfile charts/standard-app/Chart.yaml
-          cat charts/standard-app/Chart.yaml
+          mv tmpfile ${PWD}charts/standard-app/Chart.yaml
+          cat ${PWD}charts/standard-app/Chart.yaml
 
       - name: Chart Package
         run: |
-          helm package charts/standard-app 
-          mv *.tgz charts/standard-app
+          helm package ${PWD}/charts/standard-app 
+          mv ${PWD}/*.gtgz ${PWD}/charts/standard-app
 
       - name: Create/Update index's chart
         run: |
           helm repo index --url https://julinux-io.github.io/standard-app/charts/standard-app charts/standard-app 
-          mv charts/standard-app/index.yaml .
+          mv ${PWD}/charts/standard-app/index.yaml .
 
       - name: Commit and Push Changes
         run: |
