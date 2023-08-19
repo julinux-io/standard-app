@@ -3,7 +3,7 @@ name: Helm Chart Release
 on:
   push:
     paths-ignore:
-      - "*standard-app.yml"
+      - ".github/workflows"
     branches:
       - "standard-app"
 
