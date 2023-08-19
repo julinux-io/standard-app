@@ -2,8 +2,10 @@ name: Helm Chart Release
 
 on:
   push:
-    paths-ignore: ["*standard-app.yml"]
-    branches: ["standard-app"]
+    paths-ignore:
+      - "*standard-app.yml"
+    branches:
+      - "standard-app"
 
 jobs:
   release:
