@@ -54,7 +54,6 @@ jobs:
           git config --local user.name "GitHub Action"
           git status
           git add .
-          git status
           git commit -m "Update Helm repository"
           git push origin standard-app
 
@@ -70,7 +69,7 @@ jobs:
   #       with:
   #         tag_name: v${{ steps.bump_version.outputs.new_version }}
   #         release_name: Release v${{ steps.bump_version.outputs.new_version }}
-  #         body: |
+  #         body: |x
   #           Update tag.
   #         draft: false
   #         prerelease: false
