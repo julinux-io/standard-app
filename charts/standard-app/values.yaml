@@ -12,8 +12,8 @@ app:
     registry: 916001899522.dkr.ecr.us-east-1.amazonaws.com/
     repository: "nhds/agent-territory-management"
     tag: "latest"
-    imagePullSecrets:
-      enabled: false
+  imagePullSecrets:
+    enabled: false
 
   logRoot: ""
   workingDir: ""

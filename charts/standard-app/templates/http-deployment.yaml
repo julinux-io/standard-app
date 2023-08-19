@@ -39,7 +39,7 @@ spec:
         imagePullPolicy: {{ .Values.app.image.pullPolicy | default "null" }}
 {{- if .Values.app.imagePullSecrets.enabled | default false }}
       imagePullSecrets:
-      - name: {{ .Values.secretName | default .Chart.Name }}
+      - name: {{ .Values.secret.secretName | default .Chart.Name }}
 {{- end }}
 {{- with .Values.app.workingDir }}
             workingDir: {{ . | quote }}
