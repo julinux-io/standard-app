@@ -29,7 +29,9 @@ jobs:
           first=$((current_parts[0] + increment_parts[0]))
           second=$((current_parts[1] + increment_parts[1]))
           third=$((current_parts[2] + increment_parts[2]))
-
+          echo $first
+          echo $second
+          echo $third
           new_version="$first.$second.$third"
           echo $new_version
 
