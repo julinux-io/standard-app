@@ -50,13 +50,9 @@ jobs:
 
       - name: Commit and Push Index and tgz
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git status
-          git checkout index
           git add '*.tgz'
           git add index.yaml
-          git commit -m "add tgz and index.yaml in branch index"
+          git commit -m "Add tgz and index.yaml in branch index"
           git push origin index
 
       - name: Commit and Push Chart
