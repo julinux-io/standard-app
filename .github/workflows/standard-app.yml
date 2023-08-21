@@ -62,7 +62,7 @@ jobs:
 
       - name: Commit and Push Index and tgz
         run: |
-          git switch index
+          git symbolic-ref HEAD refs/heads/index
           git add '*.tgz'
           git add index.yaml
           git commit -m "Add tgz and index.yaml in branch index!"
