@@ -58,6 +58,7 @@ jobs:
           git add index.yaml
           git commit -m "add tgz and index.yaml in branch index"
           git push origin index
+          git switch standard-app
           git add .
           git commit -m "Update Helm repository"
           git push origin standard-app
