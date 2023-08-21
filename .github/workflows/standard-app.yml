@@ -54,9 +54,15 @@ jobs:
           git config --local user.name "GitHub Action"
           git status
           git add .
+          git reset *.tgz
+          git reset index.yaml
           git commit -m "Update Helm repository"
           git push origin standard-app
-
+          git switch index
+          git add *.tgz
+          git add index.yaml
+          git commit -m "add tgz and index.yaml in branch index"
+          git push origin index
   # tag_update:
   #   runs-on: ubuntu-latest
   #   needs: release
