@@ -38,6 +38,18 @@ jobs:
           mv tmpfile charts/standard-app/Chart.yaml
           cat charts/standard-app/Chart.yaml
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+
+      - name: Commit and Push Chart
+        run: |
+          git checkout standard-app
+          git add .
+          git commit -m "Update Helm repository"
+          git push origin standard-app
+
       - name: Chart Package
         run: |
           helm package charts/standard-app 
@@ -48,27 +60,13 @@ jobs:
           helm repo index --url https://julinux-io.github.io/standard-app/charts/standard-app charts/standard-app 
           mv charts/standard-app/index.yaml .
 
-      - name: Configure Git
-        run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
-          git config --global push.default simple
-
       - name: Commit and Push Index and tgz
         run: |
-          git branch index
-          git checkout index
+          git switch index
           git add '*.tgz'
           git add index.yaml
           git commit -m "Add tgz and index.yaml in branch index!"
           git push origin index
-
-      - name: Commit and Push Chart
-        run: |
-          git checkout standard-app
-          git add .
-          git commit -m "Update Helm repository"
-          git push origin standard-app
 
   # tag_update:
   #   runs-on: ubuntu-latest
