@@ -54,7 +54,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git status
           git switch index
-          git add *.tgz
+          git add '*.tgz'
           git add index.yaml
           git commit -m "add tgz and index.yaml in branch index"
           git push origin index
