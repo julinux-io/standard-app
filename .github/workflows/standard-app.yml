@@ -60,7 +60,7 @@ jobs:
           git checkout index
           git add '*.tgz'
           git add index.yaml
-          git commit -m "Add tgz and index.yaml in branch index"
+          git commit -m "Add tgz and index.yaml in branch index!"
           git push origin index
 
       - name: Commit and Push Chart
