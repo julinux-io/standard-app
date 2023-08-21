@@ -5,7 +5,7 @@ on:
     paths-ignore:
       - ".github/workflows/*"
     branches:
-      - "standard-app"
+      - "main"
 
 jobs:
   release:
