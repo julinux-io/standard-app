@@ -1,0 +1,72 @@
+{{- $root := . -}}
+{{- $def := .Values.cronDefault -}}
+{{- range $id, $val := .Values.cronJobs -}}
+{{- $logs := .logs | default $def.logs -}}
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ include "util.v1.autoname" $root }}-cron-{{ $id }}
+  namespace: {{ $root.Release.Namespace }}
+  labels:
+{{ include "standard-app.v1.resource-labels" $root | indent 4 }}
+spec:
+  concurrencyPolicy: {{ .concurrencyPolicy | default $def.concurrencyPolicy | default "Forbid" | quote }}
+  schedule: "{{ .schedule | required "cron.{}.schedule must be set" }}"
+  jobTemplate:
+    metadata:
+      labels:
+{{ include "standard-app.v1.resource-labels" $root | indent 8 }}
+    spec:
+      template:
+        metadata:
+          annotations:
+            iam.amazonaws.com/role: {{ .iamRole | default $def.iamRole | default $root.Values.iamRole | default "" | quote }}
+{{ with $root.Values.extraPodAnnotations }}{{ toYaml . | indent 12 }}{{ end }}
+{{ with .extraPodAnnotations }}{{ toYaml . | indent 12 }}{{ end }}
+{{ with $def.extraPodAnnotations }}{{ toYaml . | indent 12 }}{{ end }}
+        spec:
+{{ include "util.v1.extra.affinity" (.affinity | default $def.affinity | default $root.Values.affinity) | indent 10 }}
+{{ include "util.v1.extra.tolerations" (.tolerations | default $def.tolerations | default $root.Values.tolerations) | indent 10 }}
+          serviceAccountName: {{ .serviceAccountName | default $def.serviceAccountName | default $root.Values.serviceAccountName |  default "" | quote }}
+          priorityClassName: {{ .priorityClassName | default $def.priorityClassName | default "" | quote }}
+          restartPolicy: Never
+          containers:
+          - name: app
+            image: {{ include "util.v1.extra.image_ref" $root.Values.app.image }}
+            imagePullPolicy: {{ $root.Values.app.image.pullPolicy | default "null" }}
+{{- with (.app.workingDir | default $def.app.workingDir | default $root.Values.app.workingDir) }}
+            workingDir: {{ . | quote }}
+{{- end }}
+{{ if or $root.Values.app.envVars $root.Values.app.envVarsRaw $def.app.envVars $def.app.envVarsRaw .app.envVars .app.envVarsRaw }}
+            env:
+{{ include "util.v1.env_list" $root.Values.app.envVars | indent 12 }}
+{{ with $root.Values.app.envVarsRaw }}{{ toYaml . | indent 12 }}{{ end }}
+{{ include "util.v1.env_list" $def.app.envVars | indent 12 }}
+{{ with $def.app.envVarsRaw }}{{ toYaml . | indent 12 }}{{ end }}
+{{ include "util.v1.env_list" .app.envVars | indent 12 }}
+{{ with .app.envVarsRaw }}{{ toYaml . | indent 12 }}{{ end }}
+{{ end}}
+{{ include "util.v1.extra.command_and_args" .app | indent 12 }}
+{{ include "util.v1.extra.resources" (.app.resources | default $def.app.resources) | indent 12 }}
+            volumeMounts:
+            - mountPath: {{ $root.Values.app.logRoot | required "Must specify .Values.app.logRoot" | quote }}
+              name: {{ include "util.v1.logwatch.name" "app"  | quote }}
+{{ with $root.Values.app.extraVolumeMounts }}{{ toYaml . | indent 12 }}{{ end }}
+{{ with $def.app.extraVolumeMounts }}{{ toYaml . | indent 12 }}{{ end }}
+{{ with .app.extraVolumeMounts }}{{ toYaml . | indent 12 }}{{ end }}
+
+{{ include "util.v1.logwatch.container_list" $logs | indent 10 }}
+{{ with $def.extraContainers }}{{ toYaml . | indent 10 }}{{ end }}
+{{ with .extraContainers }}{{ toYaml . | indent 10 }}{{ end }}
+
+          initContainers:
+{{ with $def.extraInitContainers }}{{ toYaml . | indent 10 }}{{ end }}
+{{ with .extraInitContainers }}{{ toYaml . | indent 10 }}{{ end }}
+{{ include "util.v1.logwatch.container_init_list" $logs | indent 10 }}
+          volumes:
+{{ include "util.v1.logwatch.volume_list" $logs | indent 10 }}
+{{ with $root.Values.extraVolumes }}{{ toYaml . | indent 10 }}{{ end }}
+{{ with $def.extraVolumes }}{{ toYaml . | indent 10 }}{{ end }}
+{{ with .extraVolumes }}{{ toYaml . | indent 10 }}{{ end }}
+{{ end }}

@@ -1,0 +1,152 @@
+{{ if .Values.http.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "util.v1.autoname" . }}-http
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "standard-app.v1.resource-labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.http.replicas }}
+{{- with .Values.http.deploymentStrategy }}
+  strategy:
+{{ toYaml . | indent 4 }}
+{{- end}}
+  minReadySeconds: {{ .Values.http.minReadySeconds | default 0 }}
+  selector:
+    matchLabels:
+{{ include "standard-app.v1.selector-labels" . | indent 6 }}
+      tier: http
+  template:
+    metadata:
+      annotations:
+        iam.amazonaws.com/role: {{ .Values.http.iamRole | default .Values.iamRole | default "" | quote}}
+{{ with .Values.extraPodAnnotations }}{{ toYaml . | indent 8 }}{{ end }}
+{{ with .Values.http.extraPodAnnotations }}{{ toYaml . | indent 8 }}{{ end }}
+      labels:
+{{ include "standard-app.v1.selector-labels" . | indent 8 }}
+{{ include "standard-app.v1.newrelic.labels" .Values.http.app.newrelic | indent 8 }}
+        tier: http
+    spec:
+{{ include "util.v1.extra.affinity" (.Values.http.affinity | default .Values.affinity) | indent 6 }}
+{{ include "util.v1.extra.tolerations" (.Values.http.tolerations | default .Values.tolerations) | indent 6 }}
+      serviceAccountName: {{ .Values.http.serviceAccountName | default .Values.serviceAccountName | default "" | quote }}
+      priorityClassName: {{ .Values.http.priorityClassName | default .Values.priorityClassName | default "" | quote }}
+      containers:
+      - name: app
+        image: {{ include "util.v1.extra.image_ref" .Values.app.image }}
+        imagePullPolicy: {{ .Values.app.image.pullPolicy | default "null" }}
+{{- if .Values.app.imagePullSecrets.enabled | default false }}
+      imagePullSecrets:
+      - name: {{ .Values.secret.secretName | default .Chart.Name }}
+{{- end }}
+{{- with .Values.app.workingDir }}
+            workingDir: {{ . | quote }}
+{{- end }}
+{{ if or .Values.app.envVars .Values.app.envVarsRaw .Values.http.app.envVars .Values.http.app.envVarsRaw }}
+        env:
+{{ include "util.v1.env_list" .Values.app.envVars | indent 8 }}
+{{ with .Values.app.envVarsRaw }}{{ toYaml . | indent 8 }}{{ end }}
+{{ include "util.v1.env_list" .Values.http.app.envVars | indent 8 }}
+{{ with .Values.http.app.envVarsRaw }}{{ toYaml . | indent 8 }}{{ end }}
+{{ include "standard-app.v1.newrelic.env" .Values.http.app.newrelic | indent 8 }}
+{{ end }}
+{{ include "util.v1.extra.command_and_args" .Values.http.app | indent 8 }}
+{{ include "util.v1.extra.resources" .Values.http.app.resources | indent 8 }}
+{{- with .Values.http.app.ports }}
+        ports:
+{{ toYaml . | indent 10 }}
+{{- end }}
+{{ include "standard-app.v1.readiness-probe" .Values.http.app.readinessProbe | indent 8 }}
+{{ include "standard-app.v1.liveness-probe" .Values.http.app.livenessProbe | indent 8 }}
+{{ include "standard-app.v1.startup-probe" .Values.http.app.startupProbe | indent 8 }}
+        volumeMounts:
+        - mountPath: {{ .Values.app.logRoot | required "Must specify .Values.app.logRoot" | quote }}
+          name: {{ include "util.v1.logwatch.name" "app"  | quote }}
+{{ with .Values.app.extraVolumeMounts }}{{ toYaml . | indent 8 }}{{ end }}
+{{ with .Values.http.app.extraVolumeMounts }}{{ toYaml . | indent 8 }}{{ end }}
+{{- if .Values.nginx.enabled }}
+      - name: nginx
+        image: {{ include "util.v1.extra.image_ref" .Values.nginx.image }}
+        imagePullPolicy: {{ .Values.nginx.image.pullPolicy | default "null" }}
+{{ include "util.v1.extra.command_and_args" .Values.nginx | indent 8 }}
+        env:
+        # Make sure at least one env var is set to prevent syntax errors
+        - name: IS_KUBERNETES
+          value: "1"
+{{ if .Values.http.staticFiles.enabled }}
+        - name: STATIC_FILE_DIR
+          value: {{ .Values.http.staticFiles.nginxMountPath | quote }}
+{{ end }}
+{{ include "util.v1.env_list" .Values.nginx.envVars | indent 8 }}
+{{ with .Values.nginx.envVarsRaw }}{{ toYaml . | indent 8 }}{{ end }}
+        ports:
+        - containerPort: 80
+          name: http
+{{ include "util.v1.extra.resources" .Values.nginx.resources | indent 8 }}
+{{ include "standard-app.v1.readiness-probe" .Values.nginx.readinessProbe | indent 8 }}
+{{ include "standard-app.v1.liveness-probe" .Values.nginx.livenessProbe | indent 8 }}
+{{ include "standard-app.v1.startup-probe" .Values.nginx.startupProbe | indent 8 }}
+        volumeMounts:
+        - mountPath: /var/log/nginx
+          name: log-nginx
+        - name: nginx-conf-templates
+          mountPath: /etc/nginx/conf.templates.d/
+{{ if .Values.http.staticFiles.enabled }}
+        - name: {{ .Values.http.staticFiles.volumeName  | quote }}
+          mountPath: {{ .Values.http.staticFiles.nginxMountPath  | quote }}
+{{ end }}
+{{- if .Values.nginx.basicAuth }}
+        - name: nginx-auth
+          mountPath: /etc/nginx/auth
+{{- end}}
+{{ with .Values.nginx.extraVolumeMounts }}{{ toYaml . | indent 8 }}{{ end }}
+{{- end }}
+{{ include "util.v1.logwatch.container_list" .Values.http.logs | indent 6 }}
+{{ with .Values.http.extraContainers }}{{ toYaml . | indent 6 }}{{ end }}
+
+      initContainers:
+{{ with .Values.http.extraInitContainers }}{{ toYaml . | indent 6 }}{{ end }}
+{{ include "util.v1.logwatch.container_init_list" .Values.http.logs | indent 6 }}
+{{ if .Values.http.staticFiles.enabled }}
+{{ if not (or .Values.http.staticFiles.args .Values.http.staticFiles.command) }}
+{{ required "Must set .args or .command on .Values.http.staticFiles" "" }}
+{{ end }}
+      - name: static-files
+        env:
+        - name: STATIC_FILE_DIR
+          value: {{ .Values.http.staticFiles.initMountPath | quote }}
+{{ include "util.v1.env_list" .Values.app.envVars | indent 8 }}
+{{ with .Values.app.envVarsRaw }}{{ toYaml . | indent 8 }}{{ end }}
+{{ include "util.v1.env_list" .Values.http.app.envVars | indent 8 }}
+{{ with .Values.http.app.envVarsRaw }}{{ toYaml . | indent 8 }}{{ end }}
+        image: {{ include "util.v1.extra.image_ref" .Values.app.image }}
+        imagePullPolicy: {{ .Values.app.image.pullPolicy | default "null" }}
+{{ include "util.v1.extra.command_and_args" .Values.http.staticFiles | indent 8 }}
+{{ include "util.v1.extra.resources" .Values.http.staticFiles.resources | indent 8 }}
+        volumeMounts:
+        - mountPath: /static
+          name: {{ .Values.http.staticFiles.volumeName  | quote }}
+{{ with .Values.app.extraVolumeMounts }}{{ toYaml . | indent 8 }}{{ end }}
+{{ with .Values.http.staticFiles.extraVolumeMounts }}{{ toYaml . | indent 8 }}{{ end }}
+{{ end }}
+      volumes:
+{{- if .Values.nginx.enabled }}
+      - name: nginx-conf-templates
+        configMap:
+          name: {{ include "standard-app.v1.default-nginx-configmap-name" . }}
+{{- end }}
+{{ include "util.v1.logwatch.volume_list" .Values.http.logs | indent 6 }}
+{{ with .Values.extraVolumes }}{{ toYaml . | indent 6 }}{{ end }}
+{{ with .Values.http.extraVolumes }}{{ toYaml . | indent 6 }}{{ end }}
+{{ if .Values.http.staticFiles.enabled }}
+      - name: {{ .Values.http.staticFiles.volumeName  | quote }}
+        emptyDir: {}
+{{ end }}
+{{- if .Values.nginx.basicAuth }}
+      - name: nginx-auth
+        configMap:
+          name: {{ include "standard-app.v1.default-nginx-auth-configmap-name" . }}
+{{- end}}
+{{ end }}
