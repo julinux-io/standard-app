@@ -48,6 +48,12 @@ jobs:
           helm repo index --url https://julinux-io.github.io/standard-app/charts/standard-app charts/standard-app 
           mv charts/standard-app/index.yaml .
 
+      - name: Set up Git
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git config --global push.default simple
+
       - name: Commit and Push Index and tgz
         run: |
           git add '*.tgz'
