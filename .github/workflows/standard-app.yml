@@ -48,7 +48,7 @@ jobs:
           helm repo index --url https://julinux-io.github.io/standard-app/charts/standard-app charts/standard-app 
           mv charts/standard-app/index.yaml .
 
-      - name: Commit and Push Changes
+      - name: Commit and Push Index and tgz
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -58,6 +58,9 @@ jobs:
           git add index.yaml
           git commit -m "add tgz and index.yaml in branch index"
           git push origin index
+
+      - name: Commit and Push Chart
+        run: |
           git checkout standard-app
           git add .
           git commit -m "Update Helm repository"
